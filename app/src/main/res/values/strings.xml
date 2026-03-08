@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">VoiceBridge</string>
+    <string name="accessibility_service_label">VoiceBridge Accessibility Service</string>
+    <string name="accessibility_service_description">Enables VoiceBridge to detect a long Volume Up button press (3 seconds) and automatically open WhatsApp to call your trusted contact.</string>
+    <string name="btn_open_accessibility_settings">Open Accessibility Settings</string>
+    <string name="btn_test_call">Test Call (Manual Trigger)</string>
+    <string name="accessibility_settings_hint">Enable the VoiceBridge Accessibility Service in the list below to allow volume-button call triggering.</string>
+    <string name="tts_listening">Listening</string>
+    <string name="tts_calling">Calling Arpan</string>
+    <string name="tts_opening_whatsapp">Opening WhatsApp</string>
+</resources>
