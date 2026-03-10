@@ -12,7 +12,7 @@ import android.util.Log
 
 /**
  * SpeechRecognizerManager wraps Android's [SpeechRecognizer] to listen
- * continuously for the trigger phrase "Call Arpan".
+ * continuously for a configurable trigger phrase.
  *
  * The recogniser is restarted automatically after each result or recoverable
  * error so that the app stays in a perpetual listening state while the service
@@ -25,10 +25,13 @@ import android.util.Log
  *  - Invoke a callback when the phrase is detected.
  *
  * @param context Application or service context used to create the recogniser.
+ * @param triggerPhrase The phrase to listen for (case-insensitive). Defaults to
+ *   [DEFAULT_TRIGGER_PHRASE] if not supplied.
  * @param onPhraseDetected Callback invoked when the trigger phrase is detected.
  */
 class SpeechRecognizerManager(
     private val context: Context,
+    private val triggerPhrase: String = DEFAULT_TRIGGER_PHRASE,
     private val onPhraseDetected: () -> Unit
 ) {
 
@@ -45,20 +48,25 @@ class SpeechRecognizerManager(
     companion object {
         private const val TAG = "SpeechRecognizerManager"
 
-        /** The trigger phrase the recogniser should listen for. */
-        const val TRIGGER_PHRASE = "call arpan"
+        /** Default trigger phrase used when none has been user-configured. */
+        const val DEFAULT_TRIGGER_PHRASE = "call arpan"
 
         /**
-         * Checks whether the recognised text contains the [TRIGGER_PHRASE].
+         * Checks whether [recognisedText] contains [triggerPhrase] (case-insensitive).
          *
          * Exposed as a companion-object function so it can be unit-tested on
-         * the JVM without requiring an Android Context.
+         * the JVM without requiring an Android Context or a live recogniser.
          *
          * @param recognisedText The best-guess text returned by the recogniser.
-         * @return `true` if the trigger phrase was found (case-insensitive).
+         * @param triggerPhrase  The phrase to search for; defaults to [DEFAULT_TRIGGER_PHRASE].
+         * @return `true` if the trigger phrase was found.
          */
-        fun isTriggerPhrase(recognisedText: String): Boolean {
-            return recognisedText.trim().lowercase().contains(TRIGGER_PHRASE)
+        fun isTriggerPhrase(
+            recognisedText: String,
+            triggerPhrase: String = DEFAULT_TRIGGER_PHRASE
+        ): Boolean {
+            return recognisedText.trim().lowercase()
+                .contains(triggerPhrase.trim().lowercase())
         }
     }
 
@@ -176,7 +184,7 @@ class SpeechRecognizerManager(
                 if (!isListening) return
                 if (matches != null) {
                     for (result in matches) {
-                        if (isTriggerPhrase(result)) {
+                        if (isTriggerPhrase(result, triggerPhrase)) {
                             Log.d(TAG, "Trigger phrase detected: $result")
                             // Stop listening before invoking the callback so the
                             // recogniser does not restart while the call flow runs.
@@ -197,7 +205,7 @@ class SpeechRecognizerManager(
                 Log.d(TAG, "onPartialResults: $matches")
                 if (matches != null) {
                     for (result in matches) {
-                        if (isTriggerPhrase(result)) {
+                        if (isTriggerPhrase(result, triggerPhrase)) {
                             Log.d(TAG, "Trigger phrase detected in partial results: $result")
                             // Stop listening immediately so onResults for this same
                             // utterance does not fire onPhraseDetected a second time.

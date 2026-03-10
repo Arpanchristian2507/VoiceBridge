@@ -15,6 +15,7 @@ import androidx.core.app.NotificationCompat
 import com.voicebridge.MainActivity
 import com.voicebridge.R
 import com.voicebridge.call.WhatsAppCaller
+import com.voicebridge.utils.ContactPreferences
 import com.voicebridge.utils.TTSManager
 import com.voicebridge.utils.VibrationHelper
 import com.voicebridge.voice.SpeechRecognizerManager
@@ -50,9 +51,11 @@ class VoiceCommandService : Service() {
 
         ttsManager = TTSManager(this)
 
-        // Initialise the speech recogniser; the callback fires when the trigger
-        // phrase "Call Arpan" is detected.
-        speechRecognizerManager = SpeechRecognizerManager(this) {
+        // Read the user-configured trigger phrase (falls back to "call arpan").
+        val triggerPhrase = ContactPreferences.getTriggerPhrase(this)
+        Log.d(TAG, "Using trigger phrase: \"$triggerPhrase\"")
+
+        speechRecognizerManager = SpeechRecognizerManager(this, triggerPhrase) {
             onTriggerPhraseDetected()
         }
     }
@@ -102,11 +105,18 @@ class VoiceCommandService : Service() {
 
     /**
      * Called when [SpeechRecognizerManager] detects the trigger phrase.
-     * Provides spoken feedback and launches the WhatsApp call flow.
+     * Provides spoken feedback using the saved contact name and launches the
+     * WhatsApp call flow.
      */
     private fun onTriggerPhraseDetected() {
         Log.d(TAG, "Trigger phrase detected – initiating call flow")
-        ttsManager.speak(getString(R.string.tts_calling))
+        val contactName = ContactPreferences.getContactName(this)
+        val callingMessage = if (contactName.isNotBlank()) {
+            getString(R.string.tts_calling_name, contactName)
+        } else {
+            getString(R.string.tts_calling)
+        }
+        ttsManager.speak(callingMessage)
         VibrationHelper.vibrate(this)
         WhatsAppCaller.startWhatsAppCall(this)
     }
