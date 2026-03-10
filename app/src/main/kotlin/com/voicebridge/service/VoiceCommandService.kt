@@ -1,13 +1,16 @@
 package com.voicebridge.service
 
+import android.Manifest
 import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
 import android.app.Service
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.os.IBinder
 import android.util.Log
+import androidx.core.content.ContextCompat
 import androidx.core.app.NotificationCompat
 import com.voicebridge.MainActivity
 import com.voicebridge.R
@@ -17,17 +20,14 @@ import com.voicebridge.utils.VibrationHelper
 import com.voicebridge.voice.SpeechRecognizerManager
 
 /**
- * VoiceCommandService is a foreground service that will host the voice
- * recognition engine in a future version of VoiceBridge.
+ * VoiceCommandService is a foreground service that hosts the voice recognition
+ * engine and listens continuously for the trigger phrase "Call Arpan".
  *
  * Running as a foreground service ensures the OS does not kill the process
  * while waiting for the trigger phrase, and it satisfies the
  * FOREGROUND_SERVICE permission requirement for background microphone access.
  *
- * Current state: skeleton / scaffold only. The recognition logic is not yet
- * wired up. All integration points are marked with TODO comments.
- *
- * Responsibilities (future):
+ * Responsibilities:
  *  - Start and stop [SpeechRecognizerManager] listening sessions.
  *  - Receive the trigger-phrase callback and invoke the call flow.
  *  - Provide spoken feedback via [TTSManager] and haptic feedback via
@@ -50,9 +50,8 @@ class VoiceCommandService : Service() {
 
         ttsManager = TTSManager(this)
 
-        // Initialise the speech recogniser scaffold.
-        // TODO: The callback below will be invoked when the trigger phrase is
-        //       detected. Wire it up once SpeechRecognizerManager is fully implemented.
+        // Initialise the speech recogniser; the callback fires when the trigger
+        // phrase "Call Arpan" is detected.
         speechRecognizerManager = SpeechRecognizerManager(this) {
             onTriggerPhraseDetected()
         }
@@ -70,9 +69,15 @@ class VoiceCommandService : Service() {
         // Initialise the recognition engine
         speechRecognizerManager.init()
 
-        // TODO: Call speechRecognizerManager.startListening() once the engine
-        //       is fully integrated and the RECORD_AUDIO permission has been
-        //       granted at runtime.
+        // Start listening only when the RECORD_AUDIO permission has been granted.
+        // The permission must be requested by an Activity before starting this service.
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO)
+            == PackageManager.PERMISSION_GRANTED
+        ) {
+            speechRecognizerManager.startListening()
+        } else {
+            Log.w(TAG, "RECORD_AUDIO permission not granted – skipping startListening()")
+        }
 
         // Return START_STICKY so the OS restarts the service if it is killed
         return START_STICKY

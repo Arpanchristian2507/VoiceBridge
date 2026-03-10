@@ -9,4 +9,12 @@
     <string name="tts_listening">Listening</string>
     <string name="tts_calling">Calling Arpan</string>
     <string name="tts_opening_whatsapp">Opening WhatsApp</string>
+    <!--
+        The trusted contact's phone number in international format:
+        country code followed by the number, no spaces, dashes, or plus sign.
+        Example: "911234567890" for +91 12 34567890.
+        IMPORTANT: Replace this value with the real emergency contact number
+        before deploying. The app will not function correctly until this is set.
+    -->
+    <string name="emergency_contact_number">REPLACE_WITH_REAL_NUMBER</string>
 </resources>
