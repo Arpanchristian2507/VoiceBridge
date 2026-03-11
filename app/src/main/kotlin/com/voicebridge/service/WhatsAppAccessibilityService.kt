@@ -4,41 +4,37 @@ import android.accessibilityservice.AccessibilityService
 import android.util.Log
 import android.view.KeyEvent
 import android.view.accessibility.AccessibilityEvent
+import android.view.accessibility.AccessibilityNodeInfo
 import com.voicebridge.R
 import com.voicebridge.call.WhatsAppCaller
 import com.voicebridge.utils.TTSManager
 import com.voicebridge.utils.VibrationHelper
 
 /**
- * WhatsAppAccessibilityService extends [AccessibilityService] to detect a
- * long-press of the Volume Up hardware button.
- *
- * When the button is held for [LONG_PRESS_THRESHOLD_MS] (3 seconds) the service
- * triggers the WhatsApp call flow, providing spoken and haptic feedback.
- *
- * To function correctly this service must be enabled by the user in:
- *   Settings → Accessibility → VoiceBridge → VoiceBridge Accessibility Service
- *
- * The accessibility service configuration is defined in
- * res/xml/accessibility_service_config.xml with the flag
- * `canRequestFilterKeyEvents` set to `true`, which is required to receive
- * hardware key events.
+ * WhatsAppAccessibilityService extends [AccessibilityService] to:
+ * 1. Detect a long-press of the Volume Up hardware button to trigger a call.
+ * 2. Automatically click the "Call" button once WhatsApp opens.
  */
 class WhatsAppAccessibilityService : AccessibilityService() {
 
-    /** Timestamp (ms) when the Volume Up key was first pressed. */
     private var volumeUpPressedAt: Long = 0L
-
-    /** Whether the Volume Up key is currently being held down. */
     private var isVolumeUpHeld: Boolean = false
-
     private lateinit var ttsManager: TTSManager
 
     companion object {
         private const val TAG = "WhatsAppA11yService"
-
-        /** Minimum hold duration (ms) required to trigger the call flow. */
         const val LONG_PRESS_THRESHOLD_MS = 3_000L
+        
+        // Package names for WhatsApp and WhatsApp Business
+        private val WHATSAPP_PACKAGES = listOf("com.whatsapp", "com.whatsapp.w4b")
+        
+        // Common content descriptions for call buttons in various languages.
+        // We include both Video and Voice call options.
+        private val CALL_BUTTON_DESCRIPTIONS = listOf(
+            "Video call", "Videoanruf", "Appel vidéo", "Llamada de video",
+            "Voice call", "Sprachanruf", "Appel vocal", "Llamada de voz",
+            "Call", "Anrufen", "Appeler", "Llamar"
+        )
     }
 
     override fun onServiceConnected() {
@@ -47,63 +43,31 @@ class WhatsAppAccessibilityService : AccessibilityService() {
         Log.d(TAG, "WhatsAppAccessibilityService connected")
     }
 
-    /**
-     * Intercepts hardware key events.
-     *
-     * - On [KeyEvent.ACTION_DOWN] for [KeyEvent.KEYCODE_VOLUME_UP] the start
-     *   time is recorded.
-     * - On [KeyEvent.ACTION_UP] the elapsed duration is calculated. If it
-     *   exceeds [LONG_PRESS_THRESHOLD_MS] the call flow is triggered.
-     *
-     * Returning `true` consumes the event so the system does not also change
-     * the volume when the long-press is detected.
-     * Returning `false` passes the event to the system normally for short presses.
-     *
-     * @param event The key event delivered by the system.
-     * @return `true` if the event was consumed, `false` otherwise.
-     */
     override fun onKeyEvent(event: KeyEvent): Boolean {
-        if (event.keyCode != KeyEvent.KEYCODE_VOLUME_UP) {
-            // Not the volume-up button – do not consume the event
-            return false
-        }
+        if (event.keyCode != KeyEvent.KEYCODE_VOLUME_UP) return false
 
         return when (event.action) {
             KeyEvent.ACTION_DOWN -> {
                 if (!isVolumeUpHeld) {
-                    // Record when the button was first pressed
                     volumeUpPressedAt = System.currentTimeMillis()
                     isVolumeUpHeld = true
                 }
-                // Do not consume on key-down so the volume preview still works
                 false
             }
-
             KeyEvent.ACTION_UP -> {
                 val holdDurationMs = System.currentTimeMillis() - volumeUpPressedAt
                 isVolumeUpHeld = false
-
-                Log.d(TAG, "Volume Up released after ${holdDurationMs}ms")
-
                 if (holdDurationMs >= LONG_PRESS_THRESHOLD_MS) {
-                    Log.d(TAG, "Long press detected – triggering call flow")
                     onLongPressDetected()
-                    // Consume the event so the system does not act on the volume key
                     true
                 } else {
-                    // Short press – let the system handle volume adjustment
                     false
                 }
             }
-
             else -> false
         }
     }
 
-    /**
-     * Called when a 3-second Volume Up long-press is confirmed.
-     * Provides spoken feedback and launches the WhatsApp call flow.
-     */
     private fun onLongPressDetected() {
         ttsManager.speak(getString(R.string.tts_opening_whatsapp))
         VibrationHelper.vibrate(this)
@@ -111,18 +75,57 @@ class WhatsAppAccessibilityService : AccessibilityService() {
     }
 
     /**
-     * Required override for [AccessibilityService].
-     * VoiceBridge does not consume general accessibility events; all logic is
-     * driven through hardware key events via [onKeyEvent].
+     * Listen for window changes to automate clicking the call button.
      */
-    override fun onAccessibilityEvent(event: AccessibilityEvent?) {
-        // No-op: this service only uses onKeyEvent for triggering
+    override fun onAccessibilityEvent(event: AccessibilityEvent) {
+        if (!WhatsAppCaller.isCallPending) return
+
+        val packageName = event.packageName?.toString()
+        if (packageName !in WHATSAPP_PACKAGES) return
+
+        // We check for window state changes or content changes which happen as the chat loads
+        if (event.eventType == AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED || 
+            event.eventType == AccessibilityEvent.TYPE_WINDOW_CONTENT_CHANGED) {
+            
+            val rootNode = rootInActiveWindow ?: return
+            if (tryClickCallButton(rootNode)) {
+                Log.d(TAG, "Successfully clicked WhatsApp call button automatically.")
+                // Reset the flag so we don't keep clicking if the user stays in the chat
+                WhatsAppCaller.isCallPending = false
+            }
+        }
     }
 
     /**
-     * Required override for [AccessibilityService].
-     * Called when the system wants the service to stop processing events.
+     * Recursively searches for the call button and clicks it.
      */
+    private fun tryClickCallButton(node: AccessibilityNodeInfo): Boolean {
+        val description = node.contentDescription?.toString()
+        
+        if (description != null) {
+            val matches = CALL_BUTTON_DESCRIPTIONS.any { it.equals(description, ignoreCase = true) }
+            if (matches) {
+                // Found a potential button. Ensure it or its parent is clickable.
+                var target: AccessibilityNodeInfo? = node
+                while (target != null && !target.isClickable) {
+                    target = target.parent
+                }
+                
+                if (target != null && target.isClickable) {
+                    target.performAction(AccessibilityNodeInfo.ACTION_CLICK)
+                    return true
+                }
+            }
+        }
+
+        // Recursively check children
+        for (i in 0 until node.childCount) {
+            val child = node.getChild(i) ?: continue
+            if (tryClickCallButton(child)) return true
+        }
+        return false
+    }
+
     override fun onInterrupt() {
         Log.d(TAG, "WhatsAppAccessibilityService interrupted")
     }

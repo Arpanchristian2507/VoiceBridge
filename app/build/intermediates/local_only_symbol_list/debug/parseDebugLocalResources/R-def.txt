@@ -1,0 +1,25 @@
+R_DEF: Internal format may change without notice
+local
+color black
+color purple_200
+color purple_500
+color purple_700
+color teal_200
+color teal_700
+color white
+id btnOpenAccessibilitySettings
+id btnTestCall
+id tvHint
+id tvTitle
+layout activity_main
+string accessibility_service_description
+string accessibility_service_label
+string accessibility_settings_hint
+string app_name
+string btn_open_accessibility_settings
+string btn_test_call
+string tts_calling
+string tts_listening
+string tts_opening_whatsapp
+style Theme.VoiceBridge
+xml accessibility_service_config

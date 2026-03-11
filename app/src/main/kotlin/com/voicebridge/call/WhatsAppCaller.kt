@@ -8,34 +8,37 @@ import android.net.Uri
  * WhatsAppCaller is responsible for launching a WhatsApp chat with a predefined
  * emergency contact using the wa.me deep-link format.
  *
- * The wa.me link opens the WhatsApp (or WhatsApp Business) chat screen directly,
- * from where the user can immediately initiate a video call. This reduces the
- * number of steps a visually impaired user must perform to reach the call screen.
+ * To achieve a "direct call" experience, this class works in tandem with
+ * WhatsAppAccessibilityService. It sets a [isCallPending] flag so that the
+ * accessibility service knows to automatically click the "Call" button once
+ * the chat window opens.
  */
 object WhatsAppCaller {
 
     /**
-     * The predefined emergency contact phone number in international format
-     * (country code followed by the number, no spaces, dashes, or plus sign).
-     *
-     * Change this value to the trusted contact's actual number before deploying.
+     * The predefined emergency contact phone number in international format.
+     * Change this value to the trusted contact's actual number.
      */
-    const val EMERGENCY_CONTACT_NUMBER = "1234567890" // TODO: Replace with the real contact number
+    const val EMERGENCY_CONTACT_NUMBER = "+1234567890" // TODO: Replace with the real contact number
 
     /**
-     * Opens WhatsApp (or WhatsApp Business if installed) and navigates directly
-     * to the chat with [EMERGENCY_CONTACT_NUMBER].
-     *
-     * The ACTION_VIEW intent with a wa.me URI is handled by both WhatsApp and
-     * WhatsApp Business, so whichever is installed will respond to the intent.
+     * Flag used to signal the Accessibility Service that a call has been
+     * requested and it should attempt to click the call button automatically.
+     */
+    var isCallPending = false
+
+    /**
+     * Opens WhatsApp and navigates to the chat with [EMERGENCY_CONTACT_NUMBER].
+     * Sets [isCallPending] to true so the Accessibility Service can automate
+     * the final click to start the call.
      *
      * @param context The context used to start the activity.
      */
     fun startWhatsAppCall(context: Context) {
+        isCallPending = true
+        
         val uri = Uri.parse("https://wa.me/$EMERGENCY_CONTACT_NUMBER")
         val intent = Intent(Intent.ACTION_VIEW, uri).apply {
-            // FLAG_ACTIVITY_NEW_TASK is required when starting an activity from
-            // a non-activity context (e.g., a Service or AccessibilityService)
             addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
         }
         context.startActivity(intent)
