@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.voicebridge.SpeechRecognizerManagerTest" tests="9" skipped="0" failures="0" errors="0" timestamp="2026-03-11T04:46:46" hostname="DESKTOP-9CGQ616" time="0.055">
+  <properties/>
+  <testcase name="isTriggerPhrase returns true for exact lowercase phrase" classname="com.voicebridge.SpeechRecognizerManagerTest" time="0.038"/>
+  <testcase name="isTriggerPhrase returns false for reversed phrase" classname="com.voicebridge.SpeechRecognizerManagerTest" time="0.001"/>
+  <testcase name="isTriggerPhrase returns false for partial phrase" classname="com.voicebridge.SpeechRecognizerManagerTest" time="0.001"/>
+  <testcase name="isTriggerPhrase returns false for unrelated text" classname="com.voicebridge.SpeechRecognizerManagerTest" time="0.001"/>
+  <testcase name="isTriggerPhrase returns true with leading and trailing whitespace" classname="com.voicebridge.SpeechRecognizerManagerTest" time="0.001"/>
+  <testcase name="isTriggerPhrase returns true for mixed case" classname="com.voicebridge.SpeechRecognizerManagerTest" time="0.002"/>
+  <testcase name="isTriggerPhrase returns true when phrase is embedded in longer text" classname="com.voicebridge.SpeechRecognizerManagerTest" time="0.001"/>
+  <testcase name="isTriggerPhrase returns false for empty string" classname="com.voicebridge.SpeechRecognizerManagerTest" time="0.001"/>
+  <testcase name="isTriggerPhrase returns true for all uppercase" classname="com.voicebridge.SpeechRecognizerManagerTest" time="0.001"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

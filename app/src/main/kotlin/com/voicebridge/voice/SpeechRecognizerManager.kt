@@ -31,7 +31,7 @@ class SpeechRecognizerManager(
         private const val TAG = "SpeechRecognizerManager"
 
         /** The trigger phrase the recogniser should listen for. */
-        const val TRIGGER_PHRASE = "call arpan"
+        const val TRIGGER_PHRASE = "Jarvis"
 
         /**
          * Checks whether the recognised text contains the [TRIGGER_PHRASE].
