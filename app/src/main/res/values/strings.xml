@@ -3,10 +3,29 @@
     <string name="app_name">VoiceBridge</string>
     <string name="accessibility_service_label">VoiceBridge Accessibility Service</string>
     <string name="accessibility_service_description">Enables VoiceBridge to detect a long Volume Up button press (3 seconds) and automatically open WhatsApp to call your trusted contact.</string>
+    <string name="accessibility_settings_hint">Enable the VoiceBridge Accessibility Service in Settings → Accessibility to allow volume-button call triggering.</string>
+
+    <!-- Settings form -->
+    <string name="label_settings">Contact Settings</string>
+    <string name="label_contact_name">Contact Name</string>
+    <string name="hint_contact_name">e.g. Arpan</string>
+    <string name="label_phone_number">Phone Number (international format)</string>
+    <string name="hint_phone_number">e.g. 911234567890</string>
+    <string name="label_trigger_phrase">Trigger Phrase</string>
+    <string name="hint_trigger_phrase">e.g. call arpan</string>
+    <string name="btn_save_settings">Save Settings</string>
+    <string name="settings_status_configured">Ready ✓  Say \"%1$s\" to call %2$s</string>
+    <string name="settings_status_not_configured">⚠ Enter a phone number above to get started.</string>
+    <string name="toast_settings_saved">Settings saved!</string>
+    <string name="error_phone_required">Please enter a phone number.</string>
+
+    <!-- Buttons -->
     <string name="btn_open_accessibility_settings">Open Accessibility Settings</string>
     <string name="btn_test_call">Test Call (Manual Trigger)</string>
-    <string name="accessibility_settings_hint">Enable the VoiceBridge Accessibility Service in the list below to allow volume-button call triggering.</string>
-    <string name="tts_listening">Listening</string>
-    <string name="tts_calling">Calling Arpan</string>
+
+    <!-- TTS messages -->
+    <string name="tts_listening">Listening for your trigger phrase</string>
+    <string name="tts_calling">Calling your contact</string>
+    <string name="tts_calling_name">Calling %1$s</string>
     <string name="tts_opening_whatsapp">Opening WhatsApp</string>
 </resources>
